@@ -1,0 +1,69 @@
+name: Check for Website Changes
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # Runs every 5 minutes
+  workflow_dispatch:
+
+jobs:
+  check-for-changes:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Fetch website HTML
+      id: fetch_html
+      run: |
+        curl -sSL 'https://admin.utiki.com.tw/ERA/Application/UTK24/UTK2401_04.aspx?PRODUCT_ID=P0Q5TKCN' -o new_page.html
+        curl -sSL 'https://ticket.com.tw/application/UTK24/UTK2401_04.aspx?PRODUCT_ID=P0Q5TKCN' -o new_page2.html
+    - name: Check for changes
+      id: check_changes
+      run: |
+        if [ -f page.html ]; then
+          if ! diff -q page.html new_page.html > /dev/null; then
+            echo "Changes detected."
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "No changes detected."
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "No previous file found, saving the new file."
+          echo "changed=true" >> $GITHUB_ENV
+        fi
+    - name: Check for changes2
+      id: check_changes2
+      run: |
+        if [ -f page2.html ]; then
+          if ! diff -q page2.html new_page2.html > /dev/null; then
+            echo "Changes detected."
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "No changes detected."
+          fi
+        else
+          echo "No previous file found, saving the new file."
+          echo "changed=true" >> $GITHUB_ENV
+        fi
+
+    - name: Save new HTML if changed
+      if: env.changed == 'true'
+      run: |
+        mv new_page.html page.html
+        mv new_page2.html page2.html
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add page.html
+        git commit -m "Update page.html with latest changes"
+        git push
+
+    - name: Notify Discord Webhook
+      if: env.changed == 'true'
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        curl -X POST -H "Content-Type: application/json" \
+          -d '{"content": "網站有動靜! 要不去看看? https://ticket.com.tw/application/UTK24/UTK2401_04.aspx?PRODUCT_ID=P0Q5TKCN"}' \
+          "$DISCORD_WEBHOOK"
