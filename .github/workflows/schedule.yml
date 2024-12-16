@@ -55,7 +55,7 @@ jobs:
         mv new_page2.html page2.html
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
-        git add page.html
+        git add page.html page2.html
         git commit -m "Update page.html with latest changes"
         git push
 
