@@ -16,7 +16,7 @@ jobs:
     - name: Fetch website HTML
       id: fetch_html
       run: |
-
+        sudo apt install lynx
         curl -sSL 'https://admin.utiki.com.tw/ERA/Application/UTK24/UTK2401_04.aspx?PRODUCT_ID=P0Q5TKCN' | \
         lynx -stdin -dump | tr -d '\n' | tr -s ' ' > new_page.txt
         curl -sSL 'https://ticket.com.tw/application/UTK24/UTK2401_04.aspx?PRODUCT_ID=P0Q5TKCN' | \
